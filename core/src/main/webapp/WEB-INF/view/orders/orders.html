@@ -1,0 +1,336 @@
+<#include "../include/header.html"/>
+<body>
+<style>
+    span[class='k-window-title'] {
+        user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+    }
+
+</style>
+
+<script>
+
+    var viewModel2 = kendo.observable({
+        model:{
+
+        },
+        selectInfo: function (e) {
+            console.log("查询");
+            $('#orderListGrid').data('kendoGrid').dataSource.page(1);
+
+        },
+        resetForm: function (e) {
+            console.log("重置");
+            document.getElementById("myForm").reset();
+            $('#orderListGrid').data('kendoGrid').dataSource.page(1);
+        },
+        orderStatus: orderStatus
+    });
+
+</script>
+
+<div id="content-container">
+    <div id="page-content">
+        <div class="panel" style="padding: 0px;border:none;box-shadow: none;">
+            <form class="form-horizontal" id="myForm">
+                <div class="panel-body">
+                    <div class="row" style="margin-bottom: 10px;">
+
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">公司名称</label>
+                                <div class="col-sm-9">
+                                        <input id="companyNames">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">客户名称</label>
+                                <div class="col-sm-9">
+                                     <input id="customerNames">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">销售订单号</label>
+                                <div class="col-sm-9">
+                                    <input id="orderNumber" type="text" style="width: 100%" class="k-textbox">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row ">
+
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">物料</label>
+                                <div class="col-sm-9">
+                                    <input id="itemDescription">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label class="col-sm-3  control-label">订单状态</label>
+                                <div class="col-sm-9">
+                                    <select id="orderStatus">
+
+                                    </select>
+                                </div>
+                                <script>kendo.bind($('#orderStatus'), viewModel2);</script>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+            <script>kendo.bind($('#myForm'), viewModel2);</script>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-4">
+                <span class="btn btn-primary" data-bind="click:selectInfo"
+                      type="submit"><@spring.message "hap.query"/></span>
+                <span class="btn btn-default" type="button" data-bind="click:resetForm">
+                    <@spring.message "hap.reset"/></span>
+            </div>
+        </div>
+        <br/>
+        <div>
+            <div style="clear:both">
+                <div id="ordersListGrid" class="table"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    selectOrderStatus();
+
+    $("#companyNames").kendoLov({
+        code: "LOV_COMPANYS",
+        contextPath: '${base.contextPath}',
+        locale: '${base.locale}'
+    });
+
+    $("#customerNames").kendoLov({
+        code: "LOV_CUSTOMERS",
+        contextPath: '${base.contextPath}',
+        locale: '${base.locale}'
+    });
+
+    $("#itemDescription").kendoLov({
+        code: "LOV_ITEMS",
+        contextPath: '${base.contextPath}',
+        locale: '${base.locale}'
+    });
+
+    function selectOrderStatus(){
+        $.ajax({
+            url: "${base.contextPath}/orders/findOrderStatus",
+            type: "POST",
+            dataType: "json",
+            success: function (data) {
+                for (var item of data) {
+                    $('#orderStatus').append("<option value='"+item.codeValueId+"'>"+item.meaning+"</option>");
+                }
+            }
+        })
+    }
+
+    function getSelectCondition(){
+        var selectedOrderStatus = $('#orderStatus').val();
+
+        if($('#orderStatus').val()=="null"&&$('#orderStatus').val()!="")
+            selectedOrderStatus="";
+
+        console.log($('#companyNames').val()+" "+$('#customerNames').val()+" "+$('#orderNumber').val()+" "+$('#itemDescription').val()+" "+selectedOrderStatus);
+
+
+        var querycondition={
+            companyId:$('#companyNames').val(),
+            customerId:$('#customerNames').val(),
+            orderNumber:$('#orderNumber').val(),
+            itemId:$('#itemDescription').val(),
+            orderStatus:selectedOrderStatus
+        };
+        return querycondition;
+    }
+
+    var dataSource = new kendo.data.DataSource({
+        transport:{
+            read: {
+                url: "${base.contextPath}/orders/findOrderInfos",
+                dataType: "json",
+                type: "GET"
+            },
+            parameterMap: function (data, type) {
+                if(type=="read"){
+                    return getSelectCondition();
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "headId",
+                fields: {
+                    orderNumber: {type: "string"},
+                    companyName: {type: "string"},
+                    customerName: {type: "string"},
+                    orderDate: {type: "string"},
+                    orderStatus: {type: "string"},
+                    totalSum: {type: "long"}
+                }
+            }
+        }
+    });
+
+    var grid = $("#ordersListGrid").kendoGrid(
+        {
+           height: '100%',
+            resizable: true,
+            scrollable: true,
+            excel: {
+                fileName: "orderDetail.xlsx",
+                allPages: true
+            },
+            toolbar: [{
+                template: '<span class="btn btn-primary" type="button">' +
+                '<a style="color: white" href="orderDetail.html?operation=new"><@spring.message "hap.new"/></a></span>'
+            },
+                {
+                    name:"excel"
+                }],
+            dataSource: dataSource,
+            columns:[
+                {
+                    field:"orderNumber",
+                    headerAttributes: {
+                        "class": "table-header-cell",
+                        style: "text-align: center"
+                    },
+                    width: 100,
+                    title: '销售订单号',
+                    template: function(item){
+                        return '<a style="text-decoration: underline;" href="orderDetail.html?operation=edit&headId='+item.headId+'">'+item.orderNumber + '</a>';
+                    }
+                },
+                {
+                    field:"companyName",
+                    headerAttributes: {
+                        "class": "table-header-cell",
+                        style: "text-align: center"
+                    },
+                    width: 100,
+                    title:'公司名称'
+                },
+                {
+                    field:"customerName",
+                    headerAttributes: {
+                        "class": "table-header-cell",
+                        style: "text-align: center"
+                    },
+                    width: 100,
+                    title:'客户名称',
+                },
+                {
+                    field:"orderDate",
+                    headerAttributes: {
+                        "class": "table-header-cell",
+                        style: "text-align: center"
+                    },
+                    width: 100,
+                    title:'订单日期',
+                },
+                {
+                    field:"orderStatus",
+                    headerAttributes: {
+                        "class": "table-header-cell",
+                        style: "text-align: center"
+                    },
+                    width: 100,
+                    title:'订单状态',
+                },
+                {
+                    field:"totalSum",
+                    headerAttributes: {
+                        "class": "table-header-cell",
+                        style: "text-align: center"
+                    },
+                    width: 100,
+                    title:'订单金额',
+                }
+            ],
+            pageable: {
+                pageSizes: ['All', 5, 10, 20, 50],
+                refresh: true,
+                buttonCount: 5
+            }
+
+        }
+    ).data("kendoGrid");
+    kendo.bind($('#ordersListGrid'), viewModel2);
+    Hap.autoResizeGrid("#ordersListGrid");
+
+</script>
+<style type="text/css">
+
+    .task-resolved {
+        color: blue;
+    }
+
+    .task-pending {
+        color: lightblue;
+    }
+
+    .priority-low {
+        width: 80%;
+        height: 20px;
+        background: #00AA00;
+        border-radius: 5px 5px 5px 5px;
+        box-shadow: 0 0 3px #947575;
+        text-align: center;
+        line-height: 20px;
+        color: white;
+    }
+
+    .priority-median {
+        width: 80%;
+        height: 20px;
+        background: #FFA500;
+        border-radius: 5px 5px 5px 5px;
+        box-shadow: 0 0 3px #947575;
+        text-align: center;
+        line-height: 20px;
+        color: white;
+    }
+
+    .priority-high {
+        width: 80%;
+        height: 20px;
+        background: #DD0000;
+        border-radius: 5px 5px 5px 5px;
+        box-shadow: 0 0 3px #947575;
+        text-align: center;
+        line-height: 20px;
+        color: white;
+    }
+</style>
+</body>
+</html>

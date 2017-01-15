@@ -1,0 +1,386 @@
+<#include "../include/header.html"/>
+<body>
+<script src="http://cdn.bootcss.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+<script src="${base.contextPath}/common/code?orderStatus=SYS.ORDER_STATUS" type="text/javascript"></script>
+
+<script>
+
+    function GetQueryString(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+        var r = location.search.substr(1).match(reg);
+        if (r != null)return unescape(r[2]);
+        return null;
+    }
+
+    function isNew() {
+        var url = location.search;
+        var operation = GetQueryString("operation");
+        if (operation == "new")
+            return true;
+        return false;
+    }
+    function isEdit() {
+        var url = location.search;
+        var operation = GetQueryString("operation");
+        if (operation == "edit")
+            return true;
+        return false;
+    }
+
+    var url = location.search;
+
+    var operation = GetQueryString("operation");
+
+    var headId;
+
+</script>
+
+<script>
+    var viewModel = kendo.observable({
+        cancelFunction: function (e) {
+            self.location = "orders.html";
+            return;
+        },
+        saveFunction: function (e) {},
+        saveFunction: function (e) {},
+
+        approveFunction: function (e) {},
+
+        denyFunction: function (e) {},
+
+        printFunction: function (e) {}
+    });
+</script>
+
+<div id="content-container">
+    <h3>&nbsp;&nbsp;订单明细</h3>
+    <div id="page-content">
+        <div class="panel" style="padding: 0px;border:none;box-shadow: none;">
+            <form class="form-horizontal" id="myForm">
+                <div class="panel-body">
+                    <div class="row" style="margin-bottom: 10px;">
+
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">订单编号</label>
+                                <div class="col-sm-9">
+                                    <input id="orderumber" type="text" class="k-textbox" style="width: 100%">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">公司名称</label>
+                                <div class="col-sm-9">
+                                    <input id="companyNames" type="text" style="width: 100%">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">客户名称</label>
+                                <div class="col-sm-9">
+                                    <input id="customerNames" type="text"  style="width: 100%">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row ">
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">订单日期</label>
+                                <div class="col-sm-9">
+                                    <input id="orderDate" type="text"  style="width: 100%">
+                                    <script>
+                                        $("#orderDate").kendoDatePicker({
+                                            min: new Date(2016, 0, 1)
+                                        });
+                                    </script>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">订单总金额</label>
+                                <div class="col-sm-9">
+                                    <input id="orderTotalPrice" type="text" class="k-textbox" style="width: 100%"
+                                           readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label class="col-sm-3  control-label">订单状态</label>
+                                <div class="col-sm-9">
+                                    <select id="orderStatus" style="width:100%" readonly></select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+                        <div>
+
+                            <span id="btn_save_total" class="btn btn-default" type="button"
+                                  data-bind="click:saveFunction">保存</span>
+
+                            <span id="submitBtn" class="btn btn-default" type="button">提交</span>
+
+                            <span id="approveBtn" class="btn btn-default" type="button">审批</span>
+
+                            <span id="refuseBtn" class="btn btn-default" type="button">拒绝</span>
+
+                            <span id="deleteBtn" class="btn btn-default" type="button">整单删除</span>
+
+                            <span id="printBtn" class="btn btn-default" type="button">单据打印</span>
+
+                            <span id="backBtn" class="btn btn-default" type="button"
+                                  data-bind="click:cancelFunction">返回</span>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <script>kendo.bind($('#myForm'), viewModel);</script>
+        </div>
+
+
+        <ul class="nav nav-tabs" id="mytab">
+            <li class="active"><a href="#maintain" data-toggle="tab">主要</a></li>
+            <li class=""><a href="#othertain" data-toggle="tab">其他</a></li>
+        </ul>
+
+
+        <script>
+
+            selectOrderStatus();
+
+            function selectOrderStatus(){
+                $.ajax({
+                    url: "${base.contextPath}/orders/findOrderStatus",
+                    type: "POST",
+                    dataType: "json",
+                    success: function (data) {
+                        for (var item of data) {
+                            $('#orderStatus').append("<option value='"+item.codeValueId+"'>"+item.meaning+"</option>");
+                        }
+                    }
+                })
+            }
+
+            $("#companyNames").kendoLov({
+                code: "LOV_COMPANYS",
+                contextPath: '${base.contextPath}',
+                locale: '${base.locale}'
+            });
+
+            $("#customerNames").kendoLov({
+                code: "LOV_CUSTOMERS",
+                contextPath: '${base.contextPath}',
+                locale: '${base.locale}'
+            });
+
+            if (operation == "edit") {
+                headId = GetQueryString("headId");
+            }
+
+            if (operation == "new") {
+
+                $('#submitBtn').attr("disabled", true);
+                $('#approveBtn').attr("disabled", true);
+                $('#refuseBtn').attr("disabled", true);
+                $('#deleteBtn').attr("disabled", true);
+                $('#printBtn').attr("disabled", true);
+
+                $("#orderDate").kendoDatePicker({
+                    value: new Date()
+                });
+            }
+
+            else if (operation = "edit") {
+
+            }
+            else {
+                window.close();
+            }
+        </script>
+
+        <div id="queryGrid" class="tab-content">
+
+            <div id="maintain" class="tab-pane fade in active">
+                <div style="clear:both">
+                    <div id="MainOrderListGrid"></div>
+                </div>
+                <script>
+                    $('#MainOrderListGrid').kendoGrid({
+                        toolbar: [
+                            {
+                                template: '<span id="add" class="btn btn-primary k-grid-add" type="button"><@spring.message "hap.new"/></span>'
+                            },
+                            {
+                                template: '<span id="save" class="btn btn-primary k-grid-add" type="button">保存</span>'
+                            },
+                            {
+                                template: '<span id="delete" class="btn btn-primary k-grid-add" type="button"><@spring.message "hap.delete"/></span>'
+                            }
+                        ],
+                        dataSource: {},
+                        columns: [
+                            {
+                                title: '行号',
+                                headerAttributes: {
+                                    "class": "table-header-cell",
+                                    style: "text-align: center"
+                                }
+                            },
+
+                            {
+                                title: '物料编码',
+                                headerAttributes: {
+                                    "class": "table-header-cell",
+                                    style: "text-align: center"
+                                }
+                            },
+
+                            {
+                                title: '物料描述',
+                                headerAttributes: {
+                                    "class": "table-header-cell",
+                                    style: "text-align: center"
+                                }
+                            },
+
+                            {
+                                title: '产品单位',
+                                headerAttributes: {
+                                    "class": "table-header-cell",
+                                    style: "text-align: center"
+                                }
+                            },
+
+                            {
+                                title: '数量',
+                                headerAttributes: {
+                                    "class": "table-header-cell",
+                                    style: "text-align: center"
+                                }
+                            },
+
+                            {
+                                title: '销售单价',
+                                headerAttributes: {
+                                    "class": "table-header-cell",
+                                    style: "text-align: center"
+                                }
+                            },
+
+                            {
+                                title: '金额',
+                                headerAttributes: {
+                                    "class": "table-header-cell",
+                                    style: "text-align: center"
+                                }
+                            },
+
+                            {
+                                title: '备注',
+                                headerAttributes: {
+                                    "class": "table-header-cell",
+                                    style: "text-align: center"
+                                }
+                            }
+                        ],
+
+                        pageable: {
+                            pageSizes: ['All', 5, 10, 20, 50],
+                            refresh: true,
+                            buttonCount: 5
+                        }
+                    });
+                </script>
+            </div>
+
+
+            <div id="othertain" class="tab-pane fade">
+                <div style="clear:both">
+                    <div id="OtherOrderListGrid"></div>
+                </div>
+                <script>
+                    $('#OtherOrderListGrid').kendoGrid({
+                        toolbar: [
+                            {
+                                template: '<span id="add2" class="btn btn-primary k-grid-add" type="button"><@spring.message "hap.new"/></span>'
+                            },
+                            {
+                                template: '<span id="save2" class="btn btn-primary k-grid-save" type="button">保存</span>'
+                            },
+                            {
+                                template: '<span id="delete2" class="btn btn-primary k-grid-delete" type="button"><@spring.message "hap.delete"/></span>'
+                            }
+                        ],
+                        dataSource: {},
+                        columns: [
+
+                            {
+                                title: '行号',
+                                headerAttributes: {
+                                    "class": "table-header-cell",
+                                    style: "text-align: center"
+                                }
+                            },
+
+                            {
+                                title: '附件信息1',
+                                headerAttributes: {
+                                    "class": "table-header-cell",
+                                    style: "text-align: center"
+                                }
+                            },
+
+                            {
+                                title: '附件信息2',
+                                headerAttributes: {
+                                    "class": "table-header-cell",
+                                    style: "text-align: center"
+                                }
+                            },
+
+                            {
+                                title: '附件信息3',
+                                headerAttributes: {
+                                    "class": "table-header-cell",
+                                    style: "text-align: center"
+                                }
+                            },
+
+                            {
+                                title: '附件信息4',
+                                headerAttributes: {
+                                    "class": "table-header-cell",
+                                    style: "text-align: center"
+                                }
+                            }
+                        ],
+
+                        pageable: {
+                            pageSizes: ['All', 5, 10, 20, 50],
+                            refresh: true,
+                            buttonCount: 5
+                        }
+                    });
+                </script>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

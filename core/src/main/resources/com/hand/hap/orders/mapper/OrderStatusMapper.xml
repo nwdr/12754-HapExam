@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hand.hap.orders.mapper.OrderStatusMapper">
+
+    <resultMap id="codeMeaningMap" type="com.hand.hap.system.dto.CodeValue">
+        <id property="codeValueId" column="code_value_id"/>
+        <result property="codeValueId" column="code_value_id"/>
+        <result property="meaning" column="meaning"/>
+    </resultMap>
+
+    <select id="selectMeaningByCodeId" resultMap="codeMeaningMap">
+        SELECT code_value_id,meaning
+          FROM sys_code_value_b
+         WHERE code_id = (
+        SELECT code_id FROM sys_code_b
+         WHERE code = "HAP_OM_ORDER_STATUS");
+    </select>
+
+</mapper>

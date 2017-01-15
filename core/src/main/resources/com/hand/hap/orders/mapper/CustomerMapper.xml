@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hand.hap.orders.mapper.CustomerMapper">
+
+    <resultMap id="customerMap" type="com.hand.hap.orders.dto.Customer">
+        <id property="customerId" column="CUSTOMER_ID"/>
+        <result property="customerId" column="CUSTOMER_ID"/>
+        <result property="customerNumber" column="CUSTOMER_NUMBER"/>
+        <result property="customerName" column="CUSTOMER_NAME"/>
+        <result property="companyId" column="COMPANY_ID"/>
+    </resultMap>
+
+    <select id="selectCustomerByCompanyId" parameterType="com.hand.hap.orders.dto.Customer" resultMap="customerMap">
+        SELECT CUSTOMER_ID,CUSTOMER_NUMBER,CUSTOMER_NAME,COMPANY_ID
+          FROM hap_ar_customers
+         WHERE 1=1
+        <if test="customerNumber != null">
+            AND CUSTOMER_NUMBER like concat('%',concat(#{customerNumber},'%'))
+        </if>
+        <if test="customerName != null">
+            AND CUSTOMER_NAME like concat('%',concat(#{customerName},'%'))
+        </if>
+        <if test="companyId != null">
+            AND COMPANY_ID like concat('%',concat(#{companyId},'%'))
+        </if>
+    </select>
+
+</mapper>

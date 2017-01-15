@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hand.hap.orders.mapper.HapOrgCompanysMapper">
+
+    <resultMap id="hapOrgCompanysMapper" type="com.hand.hap.orders.dto.HapOrgCompanys">
+        <id property="companyId" column="company_id"/>
+        <result property="companyNumber" column="company_number"/>
+        <result property="companyName" column="company_name"/>
+        <result property="enabledFLag" column="enabled_fLag"/>
+        <result property="companyDate" column="company_date"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="lastUpdatedBy" column="last_updated_by"/>
+        <result property="lastUpdatedDate" column="last_updated_date"/>
+        <result property="lastUpdatedLogin" column="last_updated_login"/>
+    </resultMap>
+
+    <select id="selectHapOrgCompanys" parameterType="com.hand.hap.orders.dto.HapOrgCompanys" resultMap="hapOrgCompanysMapper">
+        SELECT * from hap_org_companys
+         WHERE 1=1
+         <if test="companyNumber != null">
+            AND company_number like concat('%',concat(#{companyNumber},'%'))
+         </if>
+        <if test="companyName != null">
+            AND company_name like concat('%',concat(#{companyName},'%'))
+        </if>
+    </select>
+
+</mapper>
